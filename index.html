@@ -182,6 +182,13 @@ body.menu-open #quick-save-btn { display: none !important; }
 #inv-panel, #pause-panel, #death-panel {
   background: linear-gradient(145deg, #1a1a2e, #16213e); border: 2px solid #0f3460; border-radius: 12px; padding: 24px; max-width: 90vw; max-height: 85vh; overflow-y: auto; color: #eee;
 }
+#btn-close-inv-x {
+  position: sticky; top: 0; float: right; z-index: 6; width: 38px; height: 38px; margin: -10px -10px 0 8px;
+  border-radius: 50%; border: 1px solid #e94560; background: rgba(40,12,24,0.95); color: #fff; font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; padding: 0; pointer-events: auto; cursor: pointer !important;
+}
+#btn-close-inv-x:active { background: #e94560; }
+@media (max-width: 900px), (pointer: coarse) { #btn-close-inv-x { width: 44px; height: 44px; font-size: 22px; } }
 #inv-panel h2, #pause-panel h2, #death-panel h2 { text-align: center; margin-bottom: 16px; color: #e94560; }
 .inv-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
 .inv-slot { width: 60px; height: 60px; background: rgba(0,0,0,0.4); border: 1px solid #444; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; position: relative; cursor: pointer; }
@@ -376,6 +383,12 @@ select, .btn { pointer-events: auto; }
   font-weight: 800; cursor: pointer;
 }
 #btn-char-start:disabled { opacity: 0.4; cursor: default; }
+/* Sadece isim: yatay ekrana göre tek satır */
+#char-panel { max-width: 560px; padding: 16px 22px; }
+#char-panel h2 { margin: 0 0 10px; font-size: 20px; }
+.char-name-row { margin: 0; }
+.char-name-row input[type=text] { flex: 1; min-width: 0; font-size: 18px; padding: 12px 14px; }
+.char-name-row #btn-char-start { width: auto; margin: 0; padding: 12px 26px; }
 #hud-player-name {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
   color: #fff; font-size: 13px; font-weight: 700; text-shadow: 0 1px 4px #000;
@@ -454,7 +467,7 @@ body.menu-open #pc-hint { display: none; }
 #buff-row .buff.charm { border-color: rgba(241,196,15,0.6); }
 </style>
 </head>
-<body>
+<body class="menu-open">
 <div id="frost-overlay"></div>
 <button id="quick-save-btn" type="button" title="Oyunu kaydet (K)">💾 Kaydet</button>
 <div id="hud">
@@ -509,59 +522,12 @@ body.menu-open #pc-hint { display: none; }
 <!-- Karakter oluşturma -->
 <div id="char-overlay">
   <div id="char-panel">
-    <h2>Hesap & Karakter</h2>
-    <div id="char-preview">
-      <div class="cp-hair" id="cp-hair"></div>
-      <div class="cp-head" id="cp-head"></div>
-      <div class="cp-eye l"></div><div class="cp-eye r"></div>
-      <div class="cp-arm l" id="cp-arm-l"></div>
-      <div class="cp-arm r" id="cp-arm-r"></div>
-      <div class="cp-body" id="cp-body"></div>
-      <div class="cp-leg l"></div><div class="cp-leg r"></div>
-    </div>
-    <div class="char-row">
-      <label>İsim</label>
+    <h2>İsmin ne?</h2>
+    <div class="char-row char-name-row">
       <input type="text" id="char-name" maxlength="16" placeholder="Oyuncu adı" autocomplete="off">
+      <button type="button" id="btn-char-start">Başla</button>
     </div>
-    <div class="char-row">
-      <label>Ten rengi</label>
-      <input type="color" id="char-skin" value="#e0b090">
-    </div>
-    <div class="char-row">
-      <label>Saç stili</label>
-      <select id="char-hair-style">
-        <option value="short">Kısa</option>
-        <option value="long">Uzun</option>
-        <option value="bun">Topuz</option>
-        <option value="bald">Kel</option>
-      </select>
-    </div>
-    <div class="char-row">
-      <label>Saç rengi</label>
-      <input type="color" id="char-hair" value="#3a2a1a">
-    </div>
-    <div class="char-row">
-      <label>Üst renk</label>
-      <input type="color" id="char-shirt" value="#3a6ea5">
-    </div>
-    <div class="char-row">
-      <label>Boy</label>
-      <select id="char-height">
-        <option value="0.92">Kısa</option>
-        <option value="1" selected>Normal</option>
-        <option value="1.08">Uzun</option>
-      </select>
-    </div>
-    <button type="button" id="btn-char-start">Oyuna Başla</button>
   </div>
-</div>
-
-<!-- Cihaz seçimi -->
-<div id="device-overlay">
-  <h2>WildCore</h2>
-  <p>Nasıl oynuyorsun?</p>
-  <button class="device-btn" id="btn-device-pc">🖥️ Bilgisayar (PC)</button>
-  <button class="device-btn" id="btn-device-mobile">📱 Mobil</button>
 </div>
 
 <!-- Mobil kontroller -->
@@ -587,6 +553,10 @@ body.menu-open #pc-hint { display: none; }
     <button class="menu-btn" id="btn-newgame">Yeni Oyun</button>
     <button class="menu-btn" id="btn-menu-settings">Ayarlar</button>
     <div id="menu-settings-panel">
+      <div class="settings-row">
+        <span>İsim</span>
+        <input type="text" id="menu-name" maxlength="16" placeholder="Oyuncu adı" autocomplete="off" style="width:140px;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.35);color:#fff;font-size:14px;">
+      </div>
       <div class="settings-row">
         <span>Grafik</span>
         <select id="menu-quality">
@@ -631,11 +601,11 @@ body.menu-open #pc-hint { display: none; }
 <!-- Envanter -->
 <div id="inv-overlay">
   <div id="inv-panel">
+    <button id="btn-close-inv-x" type="button" aria-label="Kapat">✕</button>
     <h2>Envanter & Üretim</h2>
     <div class="inv-grid" id="inv-grid"></div>
     <h3 style="margin:12px 0 8px;color:#f1c40f;">Üretim</h3>
     <div class="craft-list" id="craft-list"></div>
-    <div style="text-align:center;margin-top:16px;"><button class="btn btn-secondary" id="btn-close-inv">Kapat (E)</button></div>
   </div>
 </div>
 
@@ -660,13 +630,17 @@ body.menu-open #pc-hint { display: none; }
 <div id="pause-overlay">
   <div id="pause-panel">
     <h2>Duraklatıldı</h2>
+      <div class="settings-row">
+        <span>İsim</span>
+        <input type="text" id="pause-name" maxlength="16" placeholder="Oyuncu adı" autocomplete="off" style="width:140px;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.35);color:#fff;font-size:14px;">
+      </div>
     <div class="settings-row">
       <span>Grafik Kalitesi</span>
       <select id="quality-select">
         <option value="low">Düşük</option>
         <option value="medium" selected>Orta</option>
         <option value="high">Yüksek</option>
-        <option value="ultra">Ultra (Bloom)</option>
+        <option value="ultra">Ultra</option>
       </select>
     </div>
     <div class="settings-row">
@@ -967,7 +941,8 @@ const ITEMS = {
   torch: { name: 'Meşale', icon: '🕯️', stack: 16, build: true },
   chest: { name: 'Sandık', icon: '📦', stack: 4, build: true },
   bed: { name: 'Yatak', icon: '🛏️', stack: 2, build: true },
-  campfire: { name: 'Kamp Ateşi', icon: '🔥', stack: 4, build: true }
+  campfire: { name: 'Kamp Ateşi', icon: '🔥', stack: 4, build: true },
+  candle: { name: 'Mum', icon: '🕯️', stack: 8, build: true }
 };
 ITEMS.axe = ITEMS.stone_axe;
 ITEMS.pickaxe = ITEMS.stone_pick;
@@ -998,17 +973,19 @@ const RECIPES = [
   { id: 'torch', cost: { wood: 1, coal: 1 }, name: 'Meşale', cat: 'build', station: 'hand' },
   { id: 'chest', cost: { wood: 8 }, name: 'Sandık', cat: 'build', station: 'hand' },
   { id: 'bed', cost: { wood: 6, berry: 2 }, name: 'Yatak', cat: 'build', station: 'hand' },
-  { id: 'campfire', cost: { wood: 5, stone: 3 }, name: 'Kamp Ateşi', cat: 'build', station: 'hand' }
+  { id: 'campfire', cost: { wood: 5, stone: 3 }, name: 'Kamp Ateşi', cat: 'build', station: 'hand' },
+  { id: 'candle', cost: { berry: 2, coal: 1 }, name: 'Mum', cat: 'build', station: 'hand' }
 ];
 
 const CRAFT_CATS = [
-  { id: 'all', name: 'Tümü' },
   { id: 'tools', name: 'Aletler' },
   { id: 'weapons', name: 'Silahlar' },
   { id: 'smelt', name: 'Fırın' },
-  { id: 'build', name: 'Yapılar' }
+  { id: 'build', name: 'Yapılar' },
+  { id: 'cook', name: 'Yemek' },
+  { id: 'adv', name: 'Özel' }
 ];
-let craftCat = 'all';
+let craftCat = 'tools';
 
 // Kaynak uyumluluk kuralları
 // resourceKind: 'tree' | 'rock' | 'ore_iron' | 'ore_crystal' | 'dirt'
@@ -1193,15 +1170,54 @@ const Feedback = {
 const ItemVisuals = (function () {
   const iconCache = {};
 
+  function Q() { return (typeof GAME !== 'undefined' && GAME.quality) || 'medium'; }
+  function qf() { const q = Q(); return q === 'low' ? 0.7 : q === 'high' ? 1.5 : q === 'ultra' ? 2 : 1; }
+  function segs(n) { return n >= 8 ? Math.max(6, Math.round(n * qf())) : n; }
+  let _env = null;
+  /** Ultra: metaller için gökyüzü yansıması (PMREM) */
+  function env() {
+    if (_env !== null) return _env;
+    _env = false;
+    try {
+      if (typeof renderer === 'undefined' || !THREE.PMREMGenerator) return false;
+      const sc = new THREE.Scene();
+      const geo = new THREE.SphereGeometry(10, 24, 16), pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+      for (let i = 0; i < pos.count; i++) {
+        const y = pos.getY(i) / 10, c = new THREE.Color();
+        if (y > 0.05) c.setRGB(0.85, 0.78, 0.68).lerp(new THREE.Color(0.42, 0.6, 0.95), Math.min(1, y * 1.4));
+        else c.setRGB(0.22, 0.17, 0.12).lerp(new THREE.Color(0.85, 0.78, 0.68), Math.max(0, 1 + y * 6));
+        col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+      }
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      sc.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(1.6, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff0d0).multiplyScalar(6) }));
+      sun.position.set(5, 7, 3); sc.add(sun);
+      const pm = new THREE.PMREMGenerator(renderer);
+      _env = pm.fromScene(sc, 0.02).texture; pm.dispose();
+    } catch (e) { _env = false; }
+    return _env;
+  }
   function mat(color, opts) {
     opts = opts || {};
-    const m = new THREE.MeshLambertMaterial({
-      color: color,
-      emissive: opts.em != null ? opts.em : 0x000000,
-      emissiveIntensity: opts.ei != null ? opts.ei : 0,
-      transparent: !!opts.tr,
-      opacity: opts.op != null ? opts.op : 1
+    const q = Q();
+    const em = opts.em != null ? opts.em : 0x000000, ei = opts.ei != null ? opts.ei : 0;
+    const op = opts.op != null ? opts.op : 1;
+    if (q === 'low') { // düz renk, gölgesiz (basit görünüm)
+      const c = new THREE.Color(color);
+      if (ei > 0) c.lerp(new THREE.Color(em), Math.min(0.5, ei));
+      return new THREE.MeshBasicMaterial({ color: c, transparent: !!opts.tr, opacity: op });
+    }
+    if (q === 'medium') { // klasik gölgeli görünüm
+      return new THREE.MeshLambertMaterial({ color: color, emissive: em, emissiveIntensity: ei, transparent: !!opts.tr, opacity: op });
+    }
+    // yüksek / ultra: fiziksel malzeme
+    const metal = !!opts.metal, ultra = q === 'ultra';
+    const m = new THREE.MeshStandardMaterial({
+      color: color, emissive: em, emissiveIntensity: ei, transparent: !!opts.tr, opacity: op,
+      roughness: ultra ? (metal ? 0.26 : 0.6) : (metal ? 0.42 : 0.75),
+      metalness: ultra ? (metal ? 0.9 : 0.05) : (metal ? 0.5 : 0)
     });
+    if (ultra) { const e = env(); if (e) { m.envMap = e; m.envMapIntensity = metal ? 1.2 : 0.45; } }
     return m;
   }
   function box(w, h, d, m, x, y, z, rx, ry, rz) {
@@ -1213,7 +1229,7 @@ const ItemVisuals = (function () {
     return mesh;
   }
   function cyl(rt, rb, h, seg, m, x, y, z, rx, ry, rz) {
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 8), m);
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, segs(seg || 8)), m);
     mesh.position.set(x || 0, y || 0, z || 0);
     if (rx) mesh.rotation.x = rx;
     if (ry) mesh.rotation.y = ry;
@@ -1221,12 +1237,12 @@ const ItemVisuals = (function () {
     return mesh;
   }
   function sph(r, m, x, y, z, ws, hs) {
-    const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, ws || 10, hs || 8), m);
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, segs(ws || 10), segs(hs || 8)), m);
     mesh.position.set(x || 0, y || 0, z || 0);
     return mesh;
   }
   function cone(r, h, seg, m, x, y, z) {
-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(r, h, seg || 8), m);
+    const mesh = new THREE.Mesh(new THREE.ConeGeometry(r, h, segs(seg || 8)), m);
     mesh.position.set(x || 0, y || 0, z || 0);
     return mesh;
   }
@@ -1254,7 +1270,7 @@ const ItemVisuals = (function () {
   }
   function steelMat(id, level) {
     const t = metalTone(id, level || 1);
-    return mat(t.c, { em: t.em, ei: t.ei });
+    return mat(t.c, { em: t.em, ei: t.ei, metal: true });
   }
   function woodMat(dark) {
     return mat(dark ? 0x4a2e18 : 0x6b4226);
@@ -1395,6 +1411,10 @@ const ItemVisuals = (function () {
       const neck = cyl(0.025, 0.03, 0.05, 6, mat(0x6a9ecc, { tr: true, op: 0.7 }), 0.04, 0.06, -0.18);
       const cap = cyl(0.03, 0.03, 0.035, 6, mat(0x3a3a42), 0.04, 0.1, -0.18);
       g.add(bottle, liquid, neck, cap);
+    } else if (id === 'candle') {
+      g.add(cyl(0.03, 0.034, 0.2, 10, mat(0xf2e6c8, { em: 0x403018, ei: 0.12 }), 0.04, -0.02, -0.18));
+      g.add(cyl(0.004, 0.004, 0.03, 4, mat(0x222222), 0.04, 0.09, -0.18));
+      g.add(cyl(0.05, 0.05, 0.012, 12, mat(0x8a6a3a), 0.04, -0.125, -0.18));
     } else if (id === 'torch') {
       const stick = cyl(0.02, 0.025, 0.38, 6, W, 0.04, -0.06, -0.16);
       const wrap = cyl(0.03, 0.032, 0.06, 6, mat(0x3a2a18), 0.04, 0.1, -0.16);
@@ -1744,6 +1764,14 @@ const ItemVisuals = (function () {
       ctx.beginPath();
       ctx.ellipse(cx - 4, cy - 4, s * 0.12, s * 0.08, 0.35, 0, Math.PI * 2);
       ctx.fill();
+    } else if (id === 'candle') {
+      const k = s / 64;
+      const cg = ctx.createLinearGradient(cx - 7 * k, 0, cx + 7 * k, 0);
+      cg.addColorStop(0, '#c9b98f'); cg.addColorStop(0.5, '#fff3d6'); cg.addColorStop(1, '#cdbd93');
+      ctx.fillStyle = cg; roundRect(ctx, cx - 7 * k, s * 0.34, 14 * k, s * 0.5, 3 * k); ctx.fill();
+      ctx.fillStyle = '#fff3d6'; ctx.beginPath(); ctx.ellipse(cx + 5 * k, s * 0.45, 2.5 * k, 5 * k, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#222'; ctx.fillRect(cx - 1 * k, s * 0.25, 2 * k, s * 0.1);
+      ctx.fillStyle = '#8a6a3a'; roundRect(ctx, cx - 12 * k, s * 0.82, 24 * k, s * 0.07, 3 * k); ctx.fill();
     } else if (id === 'torch') {
       const wg = ctx.createLinearGradient(cx - 4, 0, cx + 4, 0);
       wg.addColorStop(0, '#4a2e18'); wg.addColorStop(0.5, '#8B5A2B'); wg.addColorStop(1, '#4a2e18');
@@ -1877,17 +1905,64 @@ const ItemVisuals = (function () {
     }
   }
 
+  /** Kaliteye göre slot ikon stili */
+  function stylize(ctx, src, s, q) {
+    if (q === 'low') { // piksel piksel, az renkli
+      const lo = document.createElement('canvas'); lo.width = lo.height = 28;
+      lo.getContext('2d').drawImage(src, 0, 0, 28, 28);
+      ctx.imageSmoothingEnabled = false; ctx.drawImage(lo, 0, 0, s, s);
+      try {
+        const im = ctx.getImageData(0, 0, s, s), d = im.data;
+        for (let i = 0; i < d.length; i += 4) { d[i] = Math.round(d[i] / 64) * 64; d[i + 1] = Math.round(d[i + 1] / 64) * 64; d[i + 2] = Math.round(d[i + 2] / 64) * 64; d[i + 3] = d[i + 3] > 100 ? 255 : 0; }
+        ctx.putImageData(im, 0, 0);
+      } catch (e) {}
+      return;
+    }
+    const ultra = q === 'ultra';
+    ctx.save();
+    if (ultra) { try { ctx.filter = 'saturate(1.28) contrast(1.14) brightness(1.05)'; } catch (e) {} }
+    ctx.shadowColor = 'rgba(0,0,0,' + (ultra ? 0.7 : 0.5) + ')'; ctx.shadowBlur = s * (ultra ? 0.08 : 0.05); ctx.shadowOffsetY = s * 0.035;
+    ctx.drawImage(src, s * 0.03, s * 0.015, s * 0.94, s * 0.94);
+    ctx.restore();
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-atop';
+    const g = ctx.createLinearGradient(0, 0, s, s);
+    g.addColorStop(0, 'rgba(255,255,255,' + (ultra ? 0.38 : 0.26) + ')'); g.addColorStop(0.45, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,' + (ultra ? 0.3 : 0.18) + ')');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, s, s);
+    if (ultra) { // parlama noktası + keskin kenar ışığı
+      const r = ctx.createRadialGradient(s * 0.3, s * 0.26, 0, s * 0.3, s * 0.26, s * 0.28);
+      r.addColorStop(0, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = r; ctx.fillRect(0, 0, s, s);
+    }
+    ctx.restore();
+  }
   function getIconDataURL(id) {
-    const key = id || '_empty';
+    const q = Q();
+    const key = q + ':' + (id || '_empty');
     if (iconCache[key]) return iconCache[key];
-    const s = 64;
+    const s = (q === 'high' || q === 'ultra') ? 96 : 64;
     const c = document.createElement('canvas');
     c.width = s; c.height = s;
     const ctx = c.getContext('2d');
-    if (id) drawIcon(ctx, id, s);
+    if (id) {
+      if (q === 'medium') drawIcon(ctx, id, s);
+      else {
+        const t = document.createElement('canvas'); t.width = s; t.height = s;
+        drawIcon(t.getContext('2d'), id, s);
+        stylize(ctx, t, s, q);
+      }
+    }
     const url = c.toDataURL('image/png');
     iconCache[key] = url;
     return url;
+  }
+  function iconRender() { const q = Q(); return (q === 'high' || q === 'ultra') ? 'auto' : 'pixelated'; }
+  /** Kalite değişince el + slot + envanter görünümlerini yenile */
+  function refresh() {
+    for (const k in iconCache) delete iconCache[k];
+    try { updateHotbarUI(); } catch (e) {}
+    try { updateHandToolVisual(); } catch (e) {}
+    try { const o = document.getElementById('inv-overlay'); if (o && o.style.display === 'flex') openInventory(); } catch (e) {}
   }
 
   function setSlotIcon(el, id) {
@@ -1898,6 +1973,7 @@ const ItemVisuals = (function () {
     img.src = getIconDataURL(id);
     img.alt = id;
     img.draggable = false;
+    img.style.imageRendering = iconRender();
     el.appendChild(img);
   }
 
@@ -1909,7 +1985,7 @@ const ItemVisuals = (function () {
     img.src = getIconDataURL(id);
     img.alt = id;
     img.draggable = false;
-    img.style.cssText = 'width:40px;height:40px;image-rendering:pixelated;pointer-events:none;';
+    img.style.cssText = 'width:40px;height:40px;image-rendering:' + iconRender() + ';pointer-events:none;';
     slotEl.appendChild(img);
     if (extraHtml) {
       const span = document.createElement('span');
@@ -1919,7 +1995,7 @@ const ItemVisuals = (function () {
     }
   }
 
-  return { buildMesh, getIconDataURL, setSlotIcon, setInvSlotIcon, drawIcon };
+  return { buildMesh, getIconDataURL, setSlotIcon, setInvSlotIcon, drawIcon, refresh };
 })();
 
 
@@ -2478,45 +2554,101 @@ let mobileSprint = false;
 let mobileAttack = false;
 
 // ---------- Başlatma ----------
-function bindDeviceButtons() {
-  const goMenu = (device) => {
-    GAME.device = device;
-    const ov = document.getElementById('device-overlay');
-    if (ov) ov.style.display = 'none';
+// ---------- Cihaz otomatik algılama (soru sormaz) ----------
+function detectDevice() {
+  let anyFine = false, anyHover = false, coarse = false;
+  try {
+    anyFine = window.matchMedia('(any-pointer: fine)').matches;
+    anyHover = window.matchMedia('(any-hover: hover)').matches;
+    coarse = window.matchMedia('(pointer: coarse)').matches;
+  } catch (e) {}
+  if (anyFine || anyHover) return 'pc';              // fare / dokunmatik yüzey var -> PC
+  const ua = (navigator.userAgent || '');
+  if (coarse || (navigator.maxTouchPoints || 0) > 0 || /Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return 'mobile';
+  return 'pc';
+}
+
+function setDevice(d) {
+  if (GAME.device === d) return;
+  GAME.device = d;
+  try {
+    const mc = document.getElementById('mobile-controls');
+    if (mc) mc.classList.toggle('active', d === 'mobile');
+    document.body.classList.toggle('pc-mode', d !== 'mobile');
+    if (d === 'mobile' && document.exitPointerLock) document.exitPointerLock();
+    if (typeof resetInputState === 'function') resetInputState();
+    if (typeof updateMobileActionLabel === 'function') updateMobileActionLabel();
+    if (d !== 'mobile' && GAME.started && !GAME.paused && !GAME.dead && typeof renderer !== 'undefined' && renderer) {
+      /* PC'de fareye tıklayınca pointer lock zaten alınır */
+    }
+    if (typeof onResize === 'function') onResize(true);
+  } catch (e) {}
+}
+
+let _deviceBooted = false;
+let _tapFsDone = false;
+function bindAutoDevice() {
+  // Klavye bağlandıysa PC'ye, dokunma gelirse (fare yoksa) mobile geç
+  document.addEventListener('keydown', (e) => {
+    if (GAME.device === 'mobile' && e.isTrusted && e.code &&
+        /^(Key[A-Z]|Space|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Digit[1-5])$/.test(e.code)) {
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      setDevice('pc');
+    }
+  }, true);
+  document.addEventListener('touchstart', () => {
+    if (GAME.device === 'pc') {
+      let fine = false;
+      try { fine = window.matchMedia('(any-pointer: fine)').matches || window.matchMedia('(any-hover: hover)').matches; } catch (e) {}
+      if (!fine) setDevice('mobile');
+    }
+  }, { capture: true, passive: true });
+
+  // Ekrana tek dokunuş / tıklama = tam ekran + yatay
+  const tapFs = () => {
+    if (isFullscreen()) return;
+    if (GAME.device !== 'mobile' && _tapFsDone) return; // PC'de Esc ile çıkınca tekrar zorlamasın
+    _tapFsDone = true;
     try { enterFullscreenLandscape(); } catch (e) {}
-    setTimeout(() => {
-      try { if (typeof onResize === 'function') onResize(true); } catch (e) {}
-      try {
-        if (typeof showMainMenu === 'function') showMainMenu();
-        else {
-          document.body.classList.add('menu-open');
-          const so = document.getElementById('start-overlay');
-          if (so) so.style.display = 'flex';
-        }
-      } catch (e) {
+  };
+  ['touchend', 'pointerup', 'click'].forEach(ev =>
+    document.addEventListener(ev, tapFs, { capture: true, passive: true }));
+  const relock = () => {
+    if (isFullscreen() && GAME.device === 'mobile') {
+      try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
+    }
+  };
+  document.addEventListener('fullscreenchange', relock);
+  document.addEventListener('webkitfullscreenchange', relock);
+}
+
+function bindDeviceButtons() {
+  if (_deviceBooted) return;
+  _deviceBooted = true;
+  GAME.device = null;
+  setDevice(detectDevice());
+  bindAutoDevice();
+  const ov = document.getElementById('device-overlay');
+  if (ov) ov.style.display = 'none';
+  setTimeout(() => {
+    try { if (typeof onResize === 'function') onResize(true); } catch (e) {}
+    try {
+      if (typeof showMainMenu === 'function') showMainMenu();
+      else {
         document.body.classList.add('menu-open');
         const so = document.getElementById('start-overlay');
         if (so) so.style.display = 'flex';
       }
-      try { bindMenuButtons(); } catch (e) {}
-      try {
-        Boot.ensureReadyThen(function () {
-          /* menü zaten açık */
-        });
-      } catch (e) { console.error('boot', e); }
-      try { MP.resumePending(); } catch (e) { console.error('mp resume', e); }
-    }, 100);
-  };
-  const pc = document.getElementById('btn-device-pc');
-  const mob = document.getElementById('btn-device-mobile');
-  if (pc) {
-    pc.onclick = (e) => { e.preventDefault(); goMenu('pc'); };
-    pc.ontouchend = (e) => { e.preventDefault(); goMenu('pc'); };
-  }
-  if (mob) {
-    mob.onclick = (e) => { e.preventDefault(); goMenu('mobile'); };
-    mob.ontouchend = (e) => { e.preventDefault(); goMenu('mobile'); };
-  }
+    } catch (e) {
+      document.body.classList.add('menu-open');
+      const so = document.getElementById('start-overlay');
+      if (so) so.style.display = 'flex';
+    }
+    try { bindMenuButtons(); } catch (e) {}
+    try { Boot.ensureReadyThen(function () { /* menü zaten açık */ }); } catch (e) { console.error('boot', e); }
+    try { MP.resumePending(); } catch (e) { console.error('mp resume', e); }
+  }, 100);
 }
 
 /** Ana menü tuşları — setupInput'tan bağımsız, her zaman çalışır */
@@ -2526,8 +2658,8 @@ function bindDeviceButtons() {
    ====================================================================== */
 const BOOT_KEY = 'wildcore_boot_v1';
 const SETTINGS_KEY = 'wildcore_settings_v1';
-const APP_VERSION = 2; // sürüm artınca eski oyunculara bir kez güncelleme
-const BOOT_DURATION_MS = 5 * 60 * 1000; // 5 dakika
+const APP_VERSION = 3; // sürüm artınca eski oyunculara bir kez güncelleme
+const BOOT_DURATION_MS = 60 * 1000; // 1 dakika
 
 const Boot = {
   data: null,
@@ -2581,6 +2713,39 @@ const Boot = {
   },
 
   isDataReady() { return !!(this.data && this.data.dataReady); },
+  setName(v) {
+    v = String(v || '').trim().slice(0, 16);
+    this.load();
+    if (v.length < 2) { this.syncNameInputs(); return false; }
+    this.data = this.data || {};
+    const base = { skin: '#e0b090', hair: '#3a2a1a', hairStyle: 'short', shirt: '#3a6ea5', height: 1 };
+    this.data.profile = Object.assign(base, this.data.profile || {}, { name: v });
+    this.save();
+    GAME.profile = this.data.profile;
+    const hud = document.getElementById('hud-player-name');
+    if (hud) hud.textContent = v;
+    this.syncNameInputs();
+    return true;
+  },
+  syncNameInputs() {
+    const n = (this.data && this.data.profile && this.data.profile.name) || '';
+    ['menu-name', 'pause-name'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && document.activeElement !== el) el.value = n;
+    });
+  },
+  autoProfile() {
+    // Daha önce oynamış (kayıt var) ama profili olmayan oyuncuya isim/karakter sorma
+    this.load();
+    if (this.hasProfile()) return;
+    let hasSave = false;
+    try { hasSave = !!(localStorage.getItem(SAVE_KEY)); } catch (e) {}
+    if (!hasSave) { try { hasSave = !!(sessionStorage.getItem(SAVE_KEY)); } catch (e) {} }
+    if (!hasSave) return;
+    this.data = this.data || {};
+    this.data.profile = { name: 'Oyuncu', skin: '#e0b090', hair: '#3a2a1a', hairStyle: 'short', shirt: '#3a6ea5', height: 1 };
+    this.save();
+  },
   hasProfile() { return !!(this.data && this.data.profile && this.data.profile.name); },
   isReturningPlayer() {
     let hasSave = false;
@@ -2589,6 +2754,7 @@ const Boot = {
     return hasSave || this.hasProfile();
   },
   needsUpdate() {
+    // Sadece önceden oynamış (kayıt/profil var) oyunculara, bir kez; APP_VERSION artana kadar tekrar çıkmaz
     if (!this.isReturningPlayer()) return false;
     const seen = (this.data && this.data.seenVersion) || 0;
     return seen < APP_VERSION;
@@ -2602,6 +2768,7 @@ const Boot = {
   },
   gatePlay(fn) {
     this.load();
+    this.autoProfile();
     if (this.needsUpdate()) {
       this.showDownload();
       this._afterReady = () => {
@@ -2627,7 +2794,7 @@ const Boot = {
     const desc = document.getElementById('boot-desc');
     const btn = document.getElementById('boot-action');
     if (title) title.textContent = 'Yeni güncelleme var';
-    if (desc) desc.textContent = 'Oyunu güncellemek için aşağıdaki butona bas. İndirme yaklaşık 5 dakika sürer; bu sürüm için bir daha sorulmaz.';
+    if (desc) desc.textContent = 'Oyunu güncellemek için aşağıdaki butona bas. İndirme yaklaşık 1 dakika sürer.';
     if (btn) { btn.textContent = 'Güncelle'; btn.disabled = false; }
     document.getElementById('boot-progress-wrap').classList.remove('on');
     document.getElementById('boot-pct').classList.remove('on');
@@ -2663,7 +2830,6 @@ const Boot = {
     const tipText = document.getElementById('boot-tip-text');
     if (btn) { btn.disabled = true; btn.textContent = 'İndiriliyor…'; }
     if (wrap) wrap.classList.add('on');
-    if (pct) pct.classList.add('on');
     if (tipBox) tipBox.classList.add('on');
     let tipIdx = Math.floor(Math.random() * this.tips.length);
     let lastTipAt = 0;
@@ -2680,11 +2846,6 @@ const Boot = {
       const jitter = Math.sin(u * 40) * 0.004;
       const p = Math.min(1, Math.max(0, u + jitter));
       if (bar) bar.style.width = (p * 100).toFixed(2) + '%';
-      if (pct) {
-        const left = Math.max(0, Math.ceil((1 - u) * BOOT_DURATION_MS / 1000));
-        const m = Math.floor(left / 60), s = left % 60;
-        pct.textContent = Math.floor(p * 100) + '% — kalan ~' + m + ':' + String(s).padStart(2, '0');
-      }
       // Her ~12 sn yeni ipucu
       if (now - lastTipAt > 12000) {
         lastTipAt = now;
@@ -2693,7 +2854,6 @@ const Boot = {
       if (u >= 1) {
         this.downloading = false;
         this.markVersionReady();
-        if (pct) pct.textContent = '100% — tamamlandı';
         if (btn) btn.textContent = 'Tamam';
         setTimeout(() => {
           const tipBox2 = document.getElementById('boot-tip');
@@ -2761,7 +2921,7 @@ const Boot = {
       shirt: (document.getElementById('char-shirt') || {}).value || '#3a6ea5',
       height: parseFloat((document.getElementById('char-height') || {}).value || '1') || 1
     };
-    this.markVersionReady();
+    this.save();
     GAME.profile = this.data.profile;
     this.applyProfileHud();
     const ov = document.getElementById('char-overlay');
@@ -2774,6 +2934,7 @@ const Boot = {
 
   applyProfileHud() {
     this.load();
+    this.syncNameInputs();
     if (!this.hasProfile()) return;
     GAME.profile = this.data.profile;
     const el = document.getElementById('hud-player-name');
@@ -2786,6 +2947,8 @@ const Boot = {
 
   bind() {
     this.load();
+    // Yeni oyuncu: güncelleme ekranı görmesin, mevcut sürüm 'görülmüş' sayılsın
+    if (!this.isReturningPlayer() && !((this.data && this.data.seenVersion) || 0)) this.markVersionReady();
     this.loadSettings();
     const btn = document.getElementById('boot-action');
     if (btn && !btn._bound) {
@@ -2809,21 +2972,10 @@ const Boot = {
 
   /** Menü açılınca zorunlu adımlar */
   ensureReadyThen(showMenuFn) {
+    // Açılışta direkt menü; isim (yeni oyuncu) ve güncelleme 'oyuna girince' (gatePlay) sorulur
     this.bind();
     this.load();
-    if (this.needsUpdate()) {
-      this.showDownload();
-      this._afterReady = () => {
-        if (!this.hasProfile()) { this.showCharacter(); this._afterReady = showMenuFn; }
-        else if (showMenuFn) showMenuFn();
-      };
-      return;
-    }
-    if (!this.hasProfile()) {
-      this.showCharacter();
-      this._afterReady = showMenuFn;
-      return;
-    }
+    this.autoProfile();
     this.applyProfileHud();
     if (showMenuFn) showMenuFn();
   }
@@ -2888,9 +3040,23 @@ function bindMenuButtons() {
       });
     };
   }
+  ['menu-name', 'pause-name', 'char-name'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el._nameBound) return;
+    el._nameBound = true;
+    // Yazarken oyun kısayolları (E, F, K...) tetiklenmesin
+    el.addEventListener('keydown', e => e.stopPropagation());
+    el.addEventListener('keyup', e => e.stopPropagation());
+    if (id !== 'char-name') {
+      el.addEventListener('change', () => { try { Boot.setName(el.value); } catch (err) {} });
+      el.addEventListener('blur', () => { try { Boot.setName(el.value); } catch (err) {} });
+    }
+  });
+  try { Boot.load(); Boot.syncNameInputs(); } catch (e) {}
   const setBtn = document.getElementById('btn-menu-settings');
   if (setBtn) {
     setBtn.onclick = () => {
+      try { Boot.load(); Boot.syncNameInputs(); } catch (e) {}
       const p = document.getElementById('menu-settings-panel');
       if (p) p.style.display = p.style.display === 'block' ? 'none' : 'block';
     };
@@ -5815,7 +5981,8 @@ function setupInput() {
     const el = document.getElementById(id);
     if (el) el.onchange = fn;
   };
-  safeOn('btn-close-inv', () => { try { closeInventory(); } catch (e) {} });
+  safeOn('btn-close-inv-x', () => { try { closeInventory(); } catch (e) {} });
+  (function () { const x = document.getElementById('btn-close-inv-x'); if (x) x.ontouchend = (ev) => { ev.preventDefault(); ev.stopPropagation(); try { closeInventory(); } catch (e) {} }; })();
   safeOn('btn-resume', () => { try { togglePause(false); } catch (e) {} });
   safeOn('btn-save', () => { try { saveGame(); } catch (e) {} });
   safeOn('btn-load', () => { try { loadGame(); togglePause(false); } catch (e) {} });
@@ -6237,6 +6404,7 @@ function updateLookLabel() {
     else if (b.id === 'bed') hint = '[E] Uyu (gece)';
     else if (b.id === 'chest') hint = '[E] Sandık';
     else if (b.id === 'campfire') hint = '[E] Isın';
+    else if (b.id === 'candle') hint = Candle.hint(b);
     else if (b.hp != null) hint = 'HP ' + Math.ceil(b.hp);
     const py = (b.y != null ? b.y : b.mesh.position.y) + 1.2;
     consider({ x: b.x, y: py, z: b.z }, nm, 5, hint);
@@ -7441,6 +7609,7 @@ function tryUseBuilding() {
       showMsg(nowOpen ? 'Kapı açıldı' : 'Kapı kapandı');
       return true;
     }
+    if (b.id === 'candle') return Candle.interact(b);
     if (b.id === 'chest') {
       if (!b.storage) b.storage = ChestSys.ensureStorage([]);
       ChestSys.openUI({ type: 'build', ref: b, storage: b.storage, name: 'Sandık' });
@@ -7645,7 +7814,7 @@ function saveGame(silent) {
       pitch: player.pitch,
       inventory: inventory.map(it => it && it.id ? { id: it.id, count: it.count, durability: it.durability } : null),
       spawnPoint: GAME.spawnPoint,
-      buildings: placedBuildings.map(b => ({ id: b.id, x: b.x, y: b.y, z: b.z, rot: b.rot, storage: b.storage || null, hp: b.hp, maxHp: b.maxHp })),
+      buildings: placedBuildings.map(b => ({ id: b.id, x: b.x, y: b.y, z: b.z, rot: b.rot, storage: b.storage || null, hp: b.hp, maxHp: b.maxHp, wax: b.wax, lit: b.lit ? 1 : 0 })),
       discoveredZones: GAME.discoveredZones || {},
       seed: GAME.worldSeed || null,
       lavaDrops: (typeof LavaDrop !== 'undefined') ? LavaDrop.save() : []
@@ -7721,6 +7890,7 @@ function loadGame() {
             hp: b.hp, maxHp: b.maxHp
           };
           addColliderForBuilding(bObj);
+          if (b.id === 'candle') Candle.restore(bObj, b);
           placedBuildings.push(bObj);
         });
       } catch (err) { console.warn('buildings restore', err); }
@@ -8482,7 +8652,8 @@ const MP = {
           rot: +(b.rot || 0).toFixed(3),
           hp: b.hp != null ? b.hp : undefined,
           maxHp: b.maxHp != null ? b.maxHp : undefined,
-          storage: b.storage || null
+          storage: b.storage || null,
+          wax: b.wax, lit: b.lit ? 1 : 0
         });
       }
     } catch (e) {}
@@ -8549,6 +8720,7 @@ const MP = {
           if (obj) {
             if (b.hp != null) obj.hp = b.hp;
             if (b.maxHp != null) obj.maxHp = b.maxHp;
+            if (b.id === 'candle' && b.wax != null) Candle.restore(obj, b);
             if (b.id === 'chest' && typeof ChestSys !== 'undefined') {
               obj.storage = ChestSys.ensureStorage(b.storage || []);
             }
@@ -10750,11 +10922,12 @@ const WC2 = (function () {
         } else if (d.age > 200) { scene.remove(d.mesh); VO.drops.splice(i, 1); continue; }
       } else if (d.tamed) {
         if (dd > 45) { d.x = player.pos.x + 2; d.z = player.pos.z + 2; }
-        else if (!d.sit && dd > 3.2) { d.x += dx / dd * 3.6 * dt; d.z += dz / dd * 3.6 * dt; }
+        else if (!d.sit && dd > 3.2) { const sp = dd > 12 ? 7.5 : 4.2; d.x += dx / dd * sp * dt; d.z += dz / dd * sp * dt; }
         d.y = gy + (d.sit ? 0.3 : 0.4 + Math.abs(Math.sin(t * 5 + i)) * (dd > 3.4 && !d.sit ? 0.12 : 0.02));
         d.mesh.scale.y += ((d.sit ? 0.7 : 1) - d.mesh.scale.y) * Math.min(1, dt * 8);
       } else d.y = gy + 0.4;
-      d.x = clamp(d.x, V.x - 60, V.x + 60); d.z = clamp(d.z, V.z - 60, V.z + 60);
+      if (!d.tamed) { d.x = clamp(d.x, V.x - 60, V.x + 60); d.z = clamp(d.z, V.z - 60, V.z + 60); }
+      else { const _c = { x: d.x, z: d.z }; if (clampToLand(_c, 2)) { d.x = _c.x; d.z = _c.z; } }
       d.mesh.position.set(d.x, d.y, d.z);
     }
     // keşif bildirimi
@@ -11794,6 +11967,229 @@ const _ue_lava = updateEnemies;
 updateEnemies = function (dt) {
   _ue_lava(dt);
   try { LavaDrop.update(dt); } catch (err) { if (!window._lavaErr) { window._lavaErr = 1; console.error('[Lava]', err); } }
+};
+
+
+/* ============================================================
+   ULTRA = RDR2 tarzı sinematik görünüm + kaliteye göre eşya görünümü
+   ============================================================ */
+(function () {
+  let pass = null, raf = 0;
+  const FS = [
+    'uniform sampler2D tDiffuse; uniform vec2 res; uniform float time, amt; varying vec2 vUv;',
+    'vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.,1.); }',
+    'void main(){',
+    '  vec2 uv=vUv, c=uv-.5; float r2=dot(c,c);',
+    '  vec2 off=c*r2*0.014*amt;',
+    '  vec3 col=vec3(texture2D(tDiffuse,uv+off).r, texture2D(tDiffuse,uv).g, texture2D(tDiffuse,uv-off).b);',
+    '  vec2 px=1./res;',
+    '  vec3 n=texture2D(tDiffuse,uv+vec2(px.x,0.)).rgb+texture2D(tDiffuse,uv-vec2(px.x,0.)).rgb+texture2D(tDiffuse,uv+vec2(0.,px.y)).rgb+texture2D(tDiffuse,uv-vec2(0.,px.y)).rgb;',
+    '  col+=(col-n*.25)*.6*amt;',
+    '  vec3 t=aces(col*1.1); col=mix(col,t,.6*amt);',
+    '  float l=dot(col,vec3(.2126,.7152,.0722));',
+    '  col=mix(col,col*vec3(1.1,1.0,.84),smoothstep(.32,.9,l)*.65*amt);',
+    '  col=mix(col,col*vec3(.86,.97,1.1),(1.-smoothstep(0.,.42,l))*.55*amt);',
+    '  col=mix(vec3(l),col,1.-.1*amt);',
+    '  col=(col-.5)*(1.+.1*amt)+.5;',
+    '  col*=1.-smoothstep(.22,.85,r2*1.9)*.42*amt;',
+    '  float g=fract(sin(dot(uv*res+time,vec2(12.9898,78.233)))*43758.5453);',
+    '  col+=(g-.5)*.04*amt;',
+    '  gl_FragColor=vec4(clamp(col,0.,1.),1.);',
+    '}'
+  ].join('\n');
+
+  function ensurePass() {
+    if (pass || !composer || typeof THREE.ShaderPass === 'undefined') return;
+    pass = new THREE.ShaderPass({
+      uniforms: { tDiffuse: { value: null }, res: { value: new THREE.Vector2(1280, 720) }, time: { value: 0 }, amt: { value: 0 } },
+      vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+      fragmentShader: FS
+    });
+    pass.enabled = false;
+    composer.addPass(pass);
+  }
+  const _sb = setupBloom;
+  setupBloom = function () { _sb(); try { ensurePass(); } catch (e) { console.error('[RDR]', e); } };
+
+  function tick() {
+    if (!pass || !pass.enabled) { raf = 0; return; }
+    pass.uniforms.time.value = (performance.now() / 1000) % 97;
+    raf = requestAnimationFrame(tick);
+  }
+  function setRes() {
+    if (!pass) return;
+    const pr = renderer.getPixelRatio();
+    pass.uniforms.res.value.set(Math.max(2, window.innerWidth * pr), Math.max(2, window.innerHeight * pr));
+  }
+  const _sc = syncComposer;
+  syncComposer = function (w, h) { _sc(w, h); try { setRes(); } catch (e) {} };
+
+  function applyLook(q) {
+    ensurePass();
+    const amt = q === 'ultra' ? 1 : q === 'high' ? 0.22 : 0;
+    if (q === 'ultra') {
+      GAME.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(GAME.pixelRatio);
+      scene.fog.far = 250; GAME.drawDistance = 200;
+      scene.fog.near = GAME.drawDistance * 0.3;
+      if (bloomPass) { bloomPass.strength = 0.36; bloomPass.threshold = 0.86; bloomPass.radius = 0.55; }
+      Feedback.maxParticles = 220;
+      const ds = document.getElementById('draw-select'); if (ds) ds.value = String(GAME.drawDistance);
+    }
+    if (pass) {
+      pass.uniforms.amt.value = amt;
+      pass.enabled = !!(amt > 0 && useBloom);
+      if (pass.enabled && !raf) raf = requestAnimationFrame(tick);
+    }
+    try { syncComposer(window.innerWidth, window.innerHeight); } catch (e) {}
+  }
+  const _aq = applyQuality;
+  applyQuality = function (q) {
+    _aq(q);
+    try { applyLook(q); } catch (e) { console.error('[RDR]', e); }
+    try { ItemVisuals.refresh(); } catch (e) {}
+  };
+})();
+
+
+/* ============================================================
+   MUM — ateşle yakılır, yandıkça erir, bitince söner ve yok olur; meyve ile onarılır
+   ============================================================ */
+const Candle = (function () {
+  const BURN = 240;      // tam bir mumun yanma süresi (saniye)
+  const H = 0.5, R = 0.085;
+
+  function build(preview) {
+    const g = new THREE.Group();
+    const op = preview ? 0.55 : 1;
+    const mk = (c, ex) => new THREE.MeshLambertMaterial(Object.assign({ color: c, transparent: !!preview, opacity: op }, ex || {}));
+    const wax = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.92, R, H, 12), mk(0xf2e6c8, { emissive: 0x403018, emissiveIntensity: 0.15 }));
+    wax.position.y = H / 2; g.add(wax);
+    const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.06, 4), mk(0x222222));
+    wick.position.y = H + 0.03; g.add(wick);
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 8), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true, opacity: 0.95 }));
+    flame.position.y = H + 0.12; flame.visible = false; g.add(flame);
+    const puddle = new THREE.Mesh(new THREE.CircleGeometry(1, 16), mk(0xe8dcc0));
+    puddle.rotation.x = -Math.PI / 2; puddle.position.y = 0.01; puddle.scale.setScalar(R * 1.1); g.add(puddle);
+    g.userData.candle = { wax, wick, flame, puddle };
+    return g;
+  }
+  function visual(b) {
+    const p = b.mesh && b.mesh.userData.candle; if (!p) return;
+    const w = Math.max(0.04, b.wax);
+    p.wax.scale.set(1 + (1 - w) * 0.25, w, 1 + (1 - w) * 0.25);
+    p.wax.position.y = H * w / 2;
+    p.wick.position.y = H * w + 0.03;
+    p.flame.position.y = H * w + 0.12;
+    p.flame.visible = !!b.lit;
+    p.puddle.scale.setScalar(R * (1.1 + (1 - b.wax) * 1.2));
+  }
+  function ensureLight(b) {
+    if (b.mesh.userData.light) return;
+    const pl = new THREE.PointLight(0xffa040, 0.6, 7);
+    pl.position.set(b.x, b.y + H * b.wax + 0.3, b.z);
+    scene.add(pl); worldLights.push(pl); b.mesh.userData.light = pl;
+  }
+  function removeLight(b) {
+    const pl = b.mesh && b.mesh.userData.light; if (!pl) return;
+    scene.remove(pl);
+    const i = worldLights.indexOf(pl); if (i >= 0) worldLights.splice(i, 1);
+    delete b.mesh.userData.light;
+  }
+  function setLit(b, on) {
+    b.lit = !!on;
+    if (on) ensureLight(b); else removeLight(b);
+    visual(b);
+  }
+  function init(b) { b.wax = 1; b.lit = false; visual(b); }
+  function restore(b, d) {
+    b.wax = d.wax != null ? Math.max(0.04, Math.min(1, d.wax)) : 1;
+    setLit(b, !!d.lit);
+  }
+  function fireNear(b) {
+    const held = getSelectedItem();
+    if (held && held.id === 'torch') return true;
+    for (const o of placedBuildings) {
+      if (o === b) continue;
+      const d = Math.hypot(o.x - b.x, o.z - b.z);
+      if (o.id === 'campfire' && d < 4.5) return true;
+      if (o.id === 'candle' && o.lit && d < 1.3) return true;
+    }
+    const pd = Math.hypot(player.pos.x - b.x, player.pos.z - b.z);
+    for (const o of placedBuildings) {
+      if (o.id === 'campfire' && Math.hypot(o.x - player.pos.x, o.z - player.pos.z) < 3.5 && pd < 3.5) return true;
+    }
+    return false;
+  }
+  function hint(b) {
+    const pct = Math.round(b.wax * 100) + '%';
+    if (!b.lit) return fireNear(b) ? '[E] Yak · ' + pct : '[E] Yak (meşale / ateş gerek) · ' + pct;
+    return '🔥 ' + pct + ' · meyve ile onar';
+  }
+  function interact(b) {
+    const held = getSelectedItem();
+    if (held && held.id === 'berry') {
+      if (b.wax >= 0.98) { showMsg('Mum zaten sağlam'); return true; }
+      removeItem('berry', 1); updateHotbarUI();
+      b.wax = 1; visual(b);
+      try { Feedback.playTone(520, 0.12, 'triangle', 0.07); } catch (e) {}
+      showMsg('Mum onarıldı (−1 meyve)');
+      return true;
+    }
+    if (!b.lit) {
+      if (fireNear(b)) {
+        setLit(b, true);
+        try { Feedback.playTone(700, 0.1, 'sine', 0.06); } catch (e) {}
+        showMsg('Mum yandı 🕯️');
+      } else showMsg('Mumu yakmak için elinde meşale tut veya kamp ateşine yaklaş');
+      return true;
+    }
+    showMsg('Mum yanıyor — kalan %' + Math.round(b.wax * 100) + ' (onarmak için elinde meyve tut)');
+    return true;
+  }
+  function finish(b, idx) {
+    try { Feedback.spawnParticles(new THREE.Vector3(b.x, b.y + 0.3, b.z), 0x999999, 10, { up: 2, spread: 0.25 }); } catch (e) {}
+    removeLight(b);
+    scene.remove(b.mesh);
+    placedBuildings.splice(idx, 1);
+    if (Math.hypot(b.x - player.pos.x, b.z - player.pos.z) < 25) showMsg('Mum tamamen eridi ve söndü');
+  }
+  function update(dt) {
+    if (GAME.paused || GAME.dead) return;
+    const t = performance.now() * 0.001;
+    for (let i = placedBuildings.length - 1; i >= 0; i--) {
+      const b = placedBuildings[i];
+      if (b.id !== 'candle' || !b.lit) continue;
+      b.wax -= dt / BURN;
+      if (b.wax <= 0) { finish(b, i); continue; }
+      visual(b);
+      const p = b.mesh.userData.candle;
+      const fl = 0.85 + Math.sin(t * 13 + b.x * 3) * 0.12 + Math.random() * 0.1;
+      p.flame.scale.set(fl, 0.85 + Math.random() * 0.35, fl);
+      const pl = b.mesh.userData.light;
+      if (pl) {
+        pl.position.y = b.y + H * b.wax + 0.3;
+        pl.intensity = 0.6 * fl * (0.55 + 0.45 * Math.min(1, b.wax * 4));
+      }
+      if (GAME.quality !== 'low' && Math.random() < 0.02) {
+        try { Feedback.spawnParticles(new THREE.Vector3(b.x, b.y + H * b.wax + 0.2, b.z), 0xff9a30, 1, { glow: true, up: 1.5, spread: 0.05 }); } catch (e) {}
+      }
+    }
+  }
+  return { build, init, restore, hint, interact, update };
+})();
+const _cbm_candle = createBuildMesh;
+createBuildMesh = function (id, preview) { return id === 'candle' ? Candle.build(preview) : _cbm_candle(id, preview); };
+const _spb_candle = spawnPlacedBuilding;
+spawnPlacedBuilding = function (id, x, y, z, rot, fromRemote) {
+  const b = _spb_candle(id, x, y, z, rot, fromRemote);
+  if (id === 'candle' && b) Candle.init(b);
+  return b;
+};
+const _ue_candle = updateEnemies;
+updateEnemies = function (dt) {
+  _ue_candle(dt);
+  try { Candle.update(dt); } catch (err) { if (!window._candleErr) { window._candleErr = 1; console.error('[Candle]', err); } }
 };
 
 // Tuşlar + başlat
