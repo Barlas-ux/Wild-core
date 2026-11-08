@@ -2187,6 +2187,8 @@ const ChestSys = {
       if (parts.length !== 2) return;
       this.moveItem(parts[0], parseInt(parts[1], 10), where, idx);
     };
+    PtrDrag.attach(el, () => ({ where, idx }), () => !!(it && it.id));
+    el._ddDrop = (pl) => { if (pl && pl.where) this.moveItem(pl.where, pl.idx, where, idx); };
     el.onclick = () => {
       // Hızlı taşı: sandık ↔ envanter
       if (!it || !it.id) return;
@@ -12190,6 +12192,100 @@ const _ue_candle = updateEnemies;
 updateEnemies = function (dt) {
   _ue_candle(dt);
   try { Candle.update(dt); } catch (err) { if (!window._candleErr) { window._candleErr = 1; console.error('[Candle]', err); } }
+};
+
+
+/* ============================================================
+   SÜRÜKLE-BIRAK (mouse + dokunmatik) — envanter ve sandık
+   ============================================================ */
+const PtrDrag = (function () {
+  function dropTarget(x, y) {
+    let n = document.elementFromPoint(x, y);
+    while (n && !n._ddDrop) n = n.parentElement;
+    return n;
+  }
+  function attach(el, payload, canStart) {
+    el.draggable = false;
+    el.style.touchAction = 'none';
+    el.onpointerdown = function (ev) {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      if (canStart && !canStart()) return;
+      const sx = ev.clientX, sy = ev.clientY, pid = ev.pointerId;
+      let dragging = false, ghost = null, hover = null;
+      try { el.setPointerCapture(pid); } catch (e) {}
+      const clearHover = () => { if (hover) { hover.style.outline = ''; hover = null; } };
+      const move = (e) => {
+        if (e.pointerId !== pid) return;
+        if (!dragging) {
+          if (Math.hypot(e.clientX - sx, e.clientY - sy) < 8) return;
+          dragging = true;
+          ghost = document.createElement('div');
+          const img = el.querySelector('img');
+          if (img) {
+            const c = img.cloneNode();
+            c.style.cssText = 'width:48px;height:48px;image-rendering:' + (img.style.imageRendering || 'pixelated') + ';';
+            ghost.appendChild(c);
+          }
+          ghost.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;opacity:.92;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 6px rgba(0,0,0,.8));';
+          document.body.appendChild(ghost);
+          el.style.opacity = '0.4';
+        }
+        e.preventDefault();
+        ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
+        const t = dropTarget(e.clientX, e.clientY);
+        if (t !== hover) { clearHover(); hover = t; if (t) t.style.outline = '2px solid #f1c40f'; }
+      };
+      const end = (e) => {
+        if (e.pointerId !== pid) return;
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', end);
+        el.removeEventListener('pointercancel', end);
+        try { el.releasePointerCapture(pid); } catch (x) {}
+        el.style.opacity = '1';
+        if (ghost) ghost.remove();
+        clearHover();
+        if (dragging) {
+          window._ptrDragged = true;
+          setTimeout(() => { window._ptrDragged = false; }, 80);
+          if (e.type === 'pointerup') {
+            const t = dropTarget(e.clientX, e.clientY);
+            if (t && t._ddDrop) t._ddDrop(payload());
+          }
+        }
+      };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+    };
+  }
+  return { attach };
+})();
+// sürükleme sonrası oluşan "tık" olayını yut (yapı eşyası yanlışlıkla yerleştirme moduna girmesin)
+document.addEventListener('click', function (e) {
+  if (window._ptrDragged) { e.stopPropagation(); e.preventDefault(); window._ptrDragged = false; }
+}, true);
+
+function attachInvDrag() {
+  document.querySelectorAll('#inv-grid .inv-slot').forEach(function (slot) {
+    const i = parseInt(slot.dataset.slot, 10);
+    PtrDrag.attach(slot, () => i, () => !!inventory[i]);
+    slot._ddDrop = function (from) {
+      const to = i;
+      if (typeof from !== 'number' || isNaN(from) || from === to) return;
+      ensureInvSlots();
+      const A = inventory[from], B = inventory[to];
+      if (A && B && canStackTogether(A, B)) mergeItemStacks(to, from);
+      else { inventory[from] = B || null; inventory[to] = A || null; }
+      updateHotbarUI();
+      updateHandToolVisual();
+      openInventory();
+    };
+  });
+}
+const _openInv_dd = openInventory;
+openInventory = function () {
+  _openInv_dd.apply(this, arguments);
+  try { attachInvDrag(); } catch (e) { console.error('[InvDrag]', e); }
 };
 
 // Tuşlar + başlat
