@@ -465,6 +465,34 @@ body.menu-open #pc-hint { display: none; }
 #buff-row .buff { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 2px 6px; font-size: 12px; color: #fff; text-shadow: 0 1px 2px #000; }
 #buff-row .buff.bad { border-color: #e74c3c; color: #ff9d94; }
 #buff-row .buff.charm { border-color: rgba(241,196,15,0.6); }
+
+/* ===== Tam ekran envanter + üretim (sol: envanter, sağ: üretim) ===== */
+#inv-overlay { align-items: stretch; justify-content: stretch; background: rgba(6,8,16,0.97); }
+#inv-panel { position: relative; width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; border-radius: 0; border: none; padding: 10px 12px; overflow: hidden; display: flex; flex-direction: column; }
+#inv-split { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.inv-col { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: rgba(0,0,0,0.25); border: 1px solid #0f3460; border-radius: 10px; padding: 8px 10px; }
+#inv-panel .inv-col h2 { text-align: left; margin: 0 0 8px; font-size: 16px; flex-shrink: 0; }
+#inv-right h2 { padding-right: 52px; }
+#btn-close-inv-x { position: absolute; top: 10px; right: 12px; float: none; margin: 0; z-index: 10; }
+#inv-left .inv-scroll { flex: 1; min-height: 0; overflow: hidden auto; display: flex; justify-content: center; align-items: flex-start; }
+#inv-left .inv-grid { grid-template-columns: repeat(6, auto); gap: 6px; margin: 0; }
+#inv-left .inv-slot { width: clamp(36px, 13.5vh, 64px); height: clamp(36px, 13.5vh, 64px); }
+#craft-tabs { display: flex; gap: 6px; flex-shrink: 0; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+#craft-tabs .btn { flex: 0 0 auto; white-space: nowrap; padding: 7px 12px; font-size: 13px; margin: 0; }
+#craft-list { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-right: 2px; }
+#craft-list .craft-item { flex-shrink: 0; cursor: default; }
+#craft-list .craft-hint { font-size: 12px; opacity: .8; padding: 6px 2px; flex-shrink: 0; }
+@media (orientation: portrait) and (max-width: 700px) {
+  #inv-split { flex-direction: column; }
+  #inv-left { flex: 0 0 auto; }
+  #inv-left .inv-slot { width: clamp(34px, 12.5vw, 52px); height: clamp(34px, 12.5vw, 52px); }
+}
+
+/* ===== Mobil bağlamsal eylem tuşu ===== */
+#btn-action { transition: background .12s; font-weight: 700; letter-spacing: .3px; }
+#btn-action.ctx-interact { background: rgba(39,174,96,0.7); }
+#btn-action.ctx-eat { background: rgba(230,126,34,0.7); }
+#btn-action.ctx-build { background: rgba(41,128,185,0.7); }
 </style>
 </head>
 <body class="menu-open">
@@ -602,10 +630,17 @@ body.menu-open #pc-hint { display: none; }
 <div id="inv-overlay">
   <div id="inv-panel">
     <button id="btn-close-inv-x" type="button" aria-label="Kapat">✕</button>
-    <h2>Envanter & Üretim</h2>
-    <div class="inv-grid" id="inv-grid"></div>
-    <h3 style="margin:12px 0 8px;color:#f1c40f;">Üretim</h3>
-    <div class="craft-list" id="craft-list"></div>
+    <div id="inv-split">
+      <section class="inv-col" id="inv-left">
+        <h2>Envanter</h2>
+        <div class="inv-scroll"><div class="inv-grid" id="inv-grid"></div></div>
+      </section>
+      <section class="inv-col" id="inv-right">
+        <h2 id="craft-title">Üretim</h2>
+        <div id="craft-tabs"></div>
+        <div class="craft-list" id="craft-list"></div>
+      </section>
+    </div>
   </div>
 </div>
 
@@ -942,13 +977,15 @@ const ITEMS = {
   chest: { name: 'Sandık', icon: '📦', stack: 4, build: true },
   bed: { name: 'Yatak', icon: '🛏️', stack: 2, build: true },
   campfire: { name: 'Kamp Ateşi', icon: '🔥', stack: 4, build: true },
-  candle: { name: 'Mum', icon: '🕯️', stack: 8, build: true }
+  candle: { name: 'Mum', icon: '🕯️', stack: 8, build: true },
+  workbench: { name: 'Üretim Masası', icon: '🛠️', stack: 4, build: true }
 };
 ITEMS.axe = ITEMS.stone_axe;
 ITEMS.pickaxe = ITEMS.stone_pick;
 
 // Kategorili tarifler: station = hand | furnace
 const RECIPES = [
+  { id: 'workbench', cost: { wood: 4 }, name: 'Üretim Masası', cat: 'hand', station: 'hand' },
   { id: 'primitive_axe', cost: { wood: 3 }, name: 'İlkel Balta', cat: 'tools', station: 'hand' },
   { id: 'stone_axe', cost: { wood: 4, stone: 3 }, name: 'Taş Balta', cat: 'tools', station: 'hand' },
   { id: 'iron_axe', cost: { wood: 3, iron_ingot: 3 }, name: 'Demir Balta', cat: 'tools', station: 'hand' },
@@ -981,9 +1018,7 @@ const CRAFT_CATS = [
   { id: 'tools', name: 'Aletler' },
   { id: 'weapons', name: 'Silahlar' },
   { id: 'smelt', name: 'Fırın' },
-  { id: 'build', name: 'Yapılar' },
-  { id: 'cook', name: 'Yemek' },
-  { id: 'adv', name: 'Özel' }
+  { id: 'build', name: 'Yapılar' }
 ];
 let craftCat = 'tools';
 
@@ -1411,6 +1446,9 @@ const ItemVisuals = (function () {
       const neck = cyl(0.025, 0.03, 0.05, 6, mat(0x6a9ecc, { tr: true, op: 0.7 }), 0.04, 0.06, -0.18);
       const cap = cyl(0.03, 0.03, 0.035, 6, mat(0x3a3a42), 0.04, 0.1, -0.18);
       g.add(bottle, liquid, neck, cap);
+    } else if (id === 'workbench') {
+      g.add(box(0.2, 0.03, 0.13, mat(0x8a5a2b), 0.04, -0.02, -0.18));
+      [[-0.08, -0.05], [0.08, -0.05], [-0.08, 0.05], [0.08, 0.05]].forEach(function (l) { g.add(box(0.02, 0.1, 0.02, mat(0x5c3a21), 0.04 + l[0], -0.085, -0.18 + l[1])); });
     } else if (id === 'candle') {
       g.add(cyl(0.03, 0.034, 0.2, 10, mat(0xf2e6c8, { em: 0x403018, ei: 0.12 }), 0.04, -0.02, -0.18));
       g.add(cyl(0.004, 0.004, 0.03, 4, mat(0x222222), 0.04, 0.09, -0.18));
@@ -1764,6 +1802,12 @@ const ItemVisuals = (function () {
       ctx.beginPath();
       ctx.ellipse(cx - 4, cy - 4, s * 0.12, s * 0.08, 0.35, 0, Math.PI * 2);
       ctx.fill();
+    } else if (id === 'workbench') {
+      ctx.fillStyle = '#8a5a2b'; roundRect(ctx, s * 0.12, s * 0.36, s * 0.76, s * 0.14, 3); ctx.fill();
+      ctx.fillStyle = '#5c3a21'; ctx.fillRect(s * 0.18, s * 0.5, s * 0.09, s * 0.34); ctx.fillRect(s * 0.73, s * 0.5, s * 0.09, s * 0.34);
+      ctx.fillStyle = '#6b4423'; ctx.fillRect(s * 0.27, s * 0.66, s * 0.46, s * 0.06);
+      ctx.fillStyle = '#b8bcc4'; ctx.fillRect(s * 0.28, s * 0.25, s * 0.2, s * 0.09);
+      ctx.fillStyle = '#7a4a22'; ctx.fillRect(s * 0.46, s * 0.28, s * 0.22, s * 0.04);
     } else if (id === 'candle') {
       const k = s / 64;
       const cg = ctx.createLinearGradient(cx - 7 * k, 0, cx + 7 * k, 0);
@@ -5780,65 +5824,75 @@ function openInventory() {
     grid.appendChild(d);
   }
   updateHotbarUI();
-  // Üretim listesi
+  // Üretim paneli: envanterden sadece MASA yapılır, her şey masadan üretilir
+  const mode = GAME.craftMode === 'table' ? 'table' : 'hand';
   const list = document.getElementById('craft-list');
-  if (!list) return;
+  const tabsEl = document.getElementById('craft-tabs');
+  const title = document.getElementById('craft-title');
+  if (!list || !tabsEl) return;
+  const keepTop = window._craftScrollReset ? 0 : list.scrollTop;
+  const keepLeft = tabsEl.scrollLeft;
+  window._craftScrollReset = false;
   list.innerHTML = '';
-  const tabs = document.createElement('div');
-  tabs.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;';
-  CRAFT_CATS.forEach(c => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'btn' + (craftCat === c.id ? '' : ' btn-secondary');
-    b.style.padding = '6px 10px';
-    b.style.fontSize = '12px';
-    b.style.pointerEvents = 'auto';
-    b.style.cursor = 'pointer';
-    b.textContent = c.name;
-    b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); craftCat = c.id; openInventory(); };
-    tabs.appendChild(b);
-  });
-  list.appendChild(tabs);
-  const hint = document.createElement('div');
-  hint.style.cssText = 'font-size:12px;opacity:0.75;margin-bottom:8px;';
-  hint.textContent = 'Yeşil satıra veya Üret’e bas. Odun/taş topla → İlkel Balta (3 odun).';
-  list.appendChild(hint);
-  RECIPES.filter(r => craftCat === 'all' || r.cat === craftCat).forEach(r => {
+  tabsEl.innerHTML = '';
+  if (title) title.textContent = mode === 'table' ? '🛠️ Üretim Masası' : 'Üretim';
+  let recipes;
+  if (mode === 'table') {
+    tabsEl.style.display = 'flex';
+    const seen = {};
+    const cats = CRAFT_CATS.filter(c => !seen[c.id] && (seen[c.id] = 1));
+    if (!cats.some(c => c.id === craftCat)) craftCat = cats[0].id;
+    cats.forEach(c => {
+      const bt = document.createElement('button');
+      bt.type = 'button';
+      bt.className = 'btn' + (craftCat === c.id ? '' : ' btn-secondary');
+      bt.textContent = c.name;
+      bt.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); craftCat = c.id; window._craftScrollReset = true; openInventory(); };
+      tabsEl.appendChild(bt);
+    });
+    recipes = RECIPES.filter(r => r.cat === craftCat);
+  } else {
+    tabsEl.style.display = 'none';
+    recipes = RECIPES.filter(r => r.cat === 'hand');
+    const hint = document.createElement('div');
+    hint.className = 'craft-hint';
+    hint.textContent = 'Eşyaları Üretim Masasında üretirsin. Önce masayı yap (4 odun), yere koy, sonra yanına gelip E ile aç.';
+    list.appendChild(hint);
+  }
+  recipes.forEach(r => {
     const can = canCraft(r);
     const div = document.createElement('div');
     div.className = 'craft-item ' + (can ? 'can' : 'cant');
-    div.style.pointerEvents = 'auto';
-    div.style.cursor = can ? 'pointer' : 'not-allowed';
     const station = r.station === 'furnace' ? ' 🔥' : '';
     const costStr = Object.entries(r.cost).map(([id, n]) => {
       const have = countItem(id);
       const ok = have >= n;
-      return '<span style="color:' + (ok ? '#2ecc71' : '#e74c3c') + ';display:inline-flex;align-items:center;gap:2px;">' + n + '<img src="' + ItemVisuals.getIconDataURL(id) + '" style="width:14px;height:14px;image-rendering:pixelated;vertical-align:middle;" alt="">(' + have + ')</span>';
+      return '<span style="color:' + (ok ? '#2ecc71' : '#e74c3c') + ';display:inline-flex;align-items:center;gap:2px;">' + n + '<img src="' + ItemVisuals.getIconDataURL(id) + '" style="width:14px;height:14px;vertical-align:middle;" alt="">(' + have + ')</span>';
     }).join(' ');
+    const left = document.createElement('span');
+    left.innerHTML = '<img src="' + ItemVisuals.getIconDataURL(r.id) + '" style="width:26px;height:26px;vertical-align:middle;margin-right:6px;" alt=""> <b>' + r.name + '</b>' + (r.out > 1 ? ' x' + r.out : '') + station + '<br><span style="font-size:11px">' + costStr + '</span>' + (ITEMS[r.id] && ITEMS[r.id].desc ? '<br><span style="font-size:10px;opacity:.7">' + ITEMS[r.id].desc + '</span>' : '');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn' + (can ? '' : ' btn-secondary');
-    btn.style.cssText = 'padding:4px 10px;font-size:12px;margin:0;pointer-events:auto;cursor:pointer;';
+    btn.style.cssText = 'padding:8px 16px;font-size:13px;margin:0;pointer-events:auto;cursor:pointer;';
     btn.textContent = can ? 'Üret' : 'Eksik';
     btn.disabled = !can;
-    const doIt = (ev) => {
-      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-      if (doCraft(r)) openInventory();
-      else openInventory();
+    // SADECE Üret tuşu üretir (satıra / kaydırmaya basınca üretmez)
+    btn.onclick = (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      doCraft(r);
+      openInventory();
     };
-    btn.onclick = doIt;
-    btn.ontouchend = (ev) => { ev.preventDefault(); doIt(ev); };
-    div.onclick = (ev) => { if (can) doIt(ev); };
-    div.ontouchend = (ev) => { if (can) { ev.preventDefault(); doIt(ev); } };
-    const left = document.createElement('span');
-    left.innerHTML = '<img src="' + ItemVisuals.getIconDataURL(r.id) + '" style="width:20px;height:20px;image-rendering:pixelated;vertical-align:middle;margin-right:4px;" alt=""> <b>' + r.name + '</b>' + (r.out > 1 ? ' x' + r.out : '') + station + '<br><span style="font-size:11px">' + costStr + '</span>' + (ITEMS[r.id]?.desc ? '<br><span style="font-size:10px;opacity:0.65">' + ITEMS[r.id].desc + '</span>' : '');
     div.appendChild(left);
     div.appendChild(btn);
     list.appendChild(div);
   });
+  list.scrollTop = keepTop;
+  tabsEl.scrollLeft = keepLeft;
 }
 
 function closeInventory() {
+  GAME.craftMode = 'hand';
   document.getElementById('inv-overlay').style.display = 'none';
   if (!GAME.dead) GAME.paused = false;
   document.body.style.cursor = '';
@@ -6127,6 +6181,7 @@ function setupMobile() {
   if (actBtn) {
     actBtn.addEventListener('touchstart', e => {
       e.preventDefault();
+      if (typeof Ctx !== 'undefined' && Ctx.tap()) return; // etkileşim (kapı, sandık, masa...)
       const it = getSelectedItem();
       const def = it ? ITEMS[it.id] : null;
       if (def && (def.food || def.use)) eatSelected();
@@ -6406,6 +6461,7 @@ function updateLookLabel() {
     else if (b.id === 'bed') hint = '[E] Uyu (gece)';
     else if (b.id === 'chest') hint = '[E] Sandık';
     else if (b.id === 'campfire') hint = '[E] Isın';
+    else if (b.id === 'workbench') hint = '[E] Üretim masası';
     else if (b.id === 'candle') hint = Candle.hint(b);
     else if (b.hp != null) hint = 'HP ' + Math.ceil(b.hp);
     const py = (b.y != null ? b.y : b.mesh.position.y) + 1.2;
@@ -7611,6 +7667,7 @@ function tryUseBuilding() {
       showMsg(nowOpen ? 'Kapı açıldı' : 'Kapı kapandı');
       return true;
     }
+    if (b.id === 'workbench') { openCraftTable(); return true; }
     if (b.id === 'candle') return Candle.interact(b);
     if (b.id === 'chest') {
       if (!b.storage) b.storage = ChestSys.ensureStorage([]);
@@ -7892,6 +7949,7 @@ function loadGame() {
             hp: b.hp, maxHp: b.maxHp
           };
           addColliderForBuilding(bObj);
+          if (b.id === 'workbench') bObj.colliderIdx = WB.collider(bObj);
           if (b.id === 'candle') Candle.restore(bObj, b);
           placedBuildings.push(bObj);
         });
@@ -11942,9 +12000,16 @@ const LavaDrop = (function () {
         else if (it.id === 'water_bucket') { const t = targetDrop(3.8); if (t && t.kind === 'lava') lab = 'DÖK'; }
         else if (it.id === 'stone') { const t = targetDrop(3.8); if (t && t.tamed) lab = 'YEDİR'; }
       }
-      if (lab) { btn.textContent = lab; const h = document.getElementById('pc-hint'); if (h) h.textContent = '🖱 Sol tık: ' + lab; lastLab = true; }
+      if (lab) { if (GAME.device !== 'mobile') btn.textContent = lab; const h = document.getElementById('pc-hint'); if (h) h.textContent = '🖱 Sol tık: ' + lab; lastLab = true; }
       else if (lastLab) { lastLab = false; updateMobileActionLabel(); }
     }
+  }
+  function ctxLabel() {
+    const it = getSelectedItem(); if (!it) return null;
+    if (it.id === 'bucket') return nearWater() ? 'DOLDUR' : null;
+    if (it.id === 'water_bucket') { const t = targetDrop(3.8); return t && t.kind === 'lava' ? 'DÖK' : null; }
+    if (it.id === 'stone') { const t = targetDrop(3.8); return t && t.tamed ? 'YEDİR' : null; }
+    return null;
   }
   function save() {
     return enemies.filter(isDrop).map(e => ({ k: e.kind, t: e.tamed ? 1 : 0, s: e.sitting ? 1 : 0, hp: Math.round(e.hp),
@@ -11963,7 +12028,7 @@ const LavaDrop = (function () {
       });
     }, 800);
   }
-  return { attack, interact, update, erupt, spawnDrop, save, load };
+  return { attack, interact, update, erupt, spawnDrop, save, load, ctxLabel };
 })();
 const _ue_lava = updateEnemies;
 updateEnemies = function (dt) {
@@ -12286,6 +12351,120 @@ const _openInv_dd = openInventory;
 openInventory = function () {
   _openInv_dd.apply(this, arguments);
   try { attachInvDrag(); } catch (e) { console.error('[InvDrag]', e); }
+};
+
+
+/* ============================================================
+   ÜRETİM MASASI — bütün üretimler burada yapılır
+   ============================================================ */
+function openCraftTable() { GAME.craftMode = 'table'; window._craftScrollReset = true; openInventory(); }
+const WB = (function () {
+  function build(preview) {
+    const g = new THREE.Group();
+    const op = preview ? 0.55 : 1;
+    const mk = (c) => new THREE.MeshLambertMaterial({ color: c, transparent: !!preview, opacity: op });
+    const add = (w, h, d, c, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mk(c)); m.position.set(x, y, z); if (ry) m.rotation.y = ry; g.add(m); return m; };
+    add(1.5, 0.14, 0.85, 0x8a5a2b, 0, 0.9, 0);
+    [[-0.65, -0.34], [0.65, -0.34], [-0.65, 0.34], [0.65, 0.34]].forEach(l => add(0.12, 0.85, 0.12, 0x5c3a21, l[0], 0.425, l[1]));
+    add(1.3, 0.06, 0.7, 0x6b4423, 0, 0.35, 0);
+    add(0.05, 0.05, 0.36, 0x7a4a22, -0.3, 1.0, 0.12, 0.5);      // çekiç sapı
+    add(0.15, 0.1, 0.09, 0x9aa0a8, -0.37, 1.02, -0.02, 0.5);    // çekiç başı
+    add(0.55, 0.03, 0.12, 0xb8bcc4, 0.3, 0.99, -0.12, -0.2);    // testere
+    return g;
+  }
+  function collider(b) {
+    const c = Math.abs(Math.cos(b.rot || 0)), s = Math.abs(Math.sin(b.rot || 0));
+    return addWallCollider(b.x, b.y + 0.45, b.z, c * 1.6 + s * 0.95, 0.9, s * 1.6 + c * 0.95, b);
+  }
+  return { build, collider };
+})();
+const _cbm_wb = createBuildMesh;
+createBuildMesh = function (id, preview) { return id === 'workbench' ? WB.build(preview) : _cbm_wb(id, preview); };
+const _spb_wb = spawnPlacedBuilding;
+spawnPlacedBuilding = function (id, x, y, z, rot, fromRemote) {
+  const b = _spb_wb(id, x, y, z, rot, fromRemote);
+  if (id === 'workbench' && b) b.colliderIdx = WB.collider(b);
+  return b;
+};
+
+
+/* ============================================================
+   MOBİL BAĞLAMSAL EYLEM TUŞU — bakılan şeye ve eldeki eşyaya göre değişir
+   ============================================================ */
+const Ctx = (function () {
+  function compute() {
+    const it = getSelectedItem(), def = it ? ITEMS[it.id] : null;
+    const tt = def && def.toolType;
+    if (GAME.mounted) return { label: 'İN', act: 'interact', run: () => dismountCamel() };
+    if (GAME.buildMode) return { label: 'YERLEŞTİR', act: 'build' };
+    const holdingBuild = !!(def && def.build);
+    const t = getCrosshairTarget(4.2);
+    // 1) bakılan şeyle etkileşim (elinde yapı parçası yoksa)
+    if (t && !holdingBuild) {
+      if (t.kind === 'building') {
+        const b = t.ref;
+        let lab = null;
+        if (b.id === 'door') lab = b.mesh.userData.open ? 'KAPAT' : 'AÇ';
+        else if (b.id === 'chest') lab = 'AÇ';
+        else if (b.id === 'bed') lab = 'UYU';
+        else if (b.id === 'campfire' || b.id === 'torch') lab = 'ISIN';
+        else if (b.id === 'workbench') lab = 'ÜRET';
+        else if (b.id === 'candle') {
+          if (def && def.id === 'berry' || (it && it.id === 'berry')) lab = b.wax < 0.98 ? 'ONAR' : 'SAĞLAM';
+          else lab = b.lit ? 'DURUM' : 'YAK';
+        }
+        if (lab) return { label: lab, act: 'interact', run: () => tryUseBuilding() };
+      } else if (t.kind === 'rock' && t.ref.kind === 'chest') {
+        return { label: 'AÇ', act: 'interact', run: () => { if (!ChestSys.tryOpen()) tryUseBuilding(); } };
+      } else if (t.kind === 'tribe' && (t.ref.trade || t.ref.role === 'trader')) {
+        return { label: 'TAKAS', act: 'interact', run: () => tryUseBuilding() };
+      } else if (t.kind === 'animal') {
+        if (t.ref.type === 'camel') return { label: 'BİN', act: 'interact', run: () => tryMountOrTame() };
+        if (t.ref.type === 'desert_fox' && !t.ref.tamed) return { label: 'EVCİLLEŞTİR', act: 'interact', run: () => tryMountOrTame() };
+      }
+    }
+    // 2) elindeki eşya
+    try { const ll = LavaDrop.ctxLabel(); if (ll) return { label: ll, act: 'attack' }; } catch (e) {}
+    if (def && (def.food || def.use)) return { label: def.drink ? 'İÇ' : (def.food ? 'YE' : 'KULLAN'), act: 'eat' };
+    if (holdingBuild) return { label: (def.name || 'YERLEŞTİR').substring(0, 11).toUpperCase(), act: 'build' };
+    // 3) saldırı / toplama
+    if (t) {
+      if (t.kind === 'enemy' || t.kind === 'animal' || t.kind === 'tribe') return { label: 'SALDIR', act: 'attack' };
+      if (t.kind === 'tree') return { label: tt === 'axe' ? 'KES' : 'VUR', act: 'attack' };
+      if (t.kind === 'rock') return { label: (tt === 'pickaxe' || tt === 'miner_axe') ? 'KAZ' : 'VUR', act: 'attack' };
+    }
+    if (tt === 'sword') return { label: 'SALDIR', act: 'attack' };
+    if (tt === 'axe') return { label: 'KES', act: 'attack' };
+    if (tt === 'pickaxe' || tt === 'miner_axe' || tt === 'shovel') return { label: 'KAZ', act: 'attack' };
+    return { label: 'VUR', act: 'attack' };
+  }
+  function refresh() {
+    const btn = document.getElementById('btn-action');
+    if (!btn) return;
+    let c;
+    try { c = compute(); } catch (e) { c = { label: 'SALDIR', act: 'attack' }; }
+    if (btn.textContent !== c.label) btn.textContent = c.label;
+    btn.className = 'action-btn' + (c.act === 'interact' ? ' ctx-interact' : c.act === 'eat' ? ' ctx-eat' : c.act === 'build' ? ' ctx-build' : '');
+  }
+  function tap() {
+    if (!GAME.started || GAME.paused || GAME.dead) return false;
+    let c;
+    try { c = compute(); } catch (e) { return false; }
+    if (c.act !== 'interact') return false;
+    try { c.run(); } catch (e) { console.error('[Ctx]', e); }
+    setTimeout(refresh, 60);
+    return true;
+  }
+  setInterval(function () {
+    if (GAME.device !== 'mobile' || !GAME.started || GAME.paused || GAME.dead) return;
+    refresh();
+  }, 150);
+  return { refresh, tap, compute };
+})();
+const _umal = updateMobileActionLabel;
+updateMobileActionLabel = function () {
+  if (GAME.device === 'mobile') { try { Ctx.refresh(); } catch (e) {} return; }
+  _umal.apply(this, arguments);
 };
 
 // Tuşlar + başlat
