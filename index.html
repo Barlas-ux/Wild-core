@@ -493,6 +493,23 @@ body.menu-open #pc-hint { display: none; }
 #btn-action.ctx-interact { background: rgba(39,174,96,0.7); }
 #btn-action.ctx-eat { background: rgba(230,126,34,0.7); }
 #btn-action.ctx-build { background: rgba(41,128,185,0.7); }
+
+/* ===== Ek kontroller: mobil menü, inşa döndür/iptal, güvenli alan ===== */
+#btn-menu-m { display: none; position: absolute; top: 12px; right: 64px; width: 44px; height: 44px; border-radius: 10px; background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.3); color: #fff; font-size: 18px; padding: 0; pointer-events: auto; z-index: 25; align-items: center; justify-content: center; touch-action: manipulation; }
+#mobile-controls.active #btn-menu-m { display: flex; }
+#build-btns { display: none; position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: 240px; gap: 8px; pointer-events: auto; z-index: 25; }
+body.building #mobile-controls.active #build-btns { display: flex; }
+#build-btns .action-btn { width: 58px; height: 58px; font-size: 24px; }
+#btn-rot { background: rgba(41,128,185,0.75); }
+#btn-cancel-build { background: rgba(192,57,43,0.75); }
+.joystick-zone { left: max(14px, env(safe-area-inset-left)); bottom: max(24px, env(safe-area-inset-bottom)); }
+.action-btns { right: max(12px, env(safe-area-inset-right)); }
+html, body { overscroll-behavior: none; }
+#craft-tabs, #craft-list { scrollbar-width: thin; scrollbar-color: #e94560 #1a1a2e; }
+#craft-tabs::-webkit-scrollbar { height: 9px; }
+#craft-list::-webkit-scrollbar { width: 9px; }
+#craft-tabs::-webkit-scrollbar-thumb, #craft-list::-webkit-scrollbar-thumb { background: #e94560; border-radius: 6px; }
+#craft-tabs::-webkit-scrollbar-track, #craft-list::-webkit-scrollbar-track { background: #1a1a2e; }
 </style>
 </head>
 <body class="menu-open">
@@ -570,6 +587,11 @@ body.menu-open #pc-hint { display: none; }
     <div class="action-btn" id="btn-sprint">KOŞ</div>
   </div>
   <div id="btn-inv-slot">E</div>
+  <button type="button" id="btn-menu-m" aria-label="Menü">☰</button>
+  <div id="build-btns">
+    <div class="action-btn" id="btn-rot">⟳</div>
+    <div class="action-btn" id="btn-cancel-build">✕</div>
+  </div>
 </div>
 
 <!-- Başlangıç menüsü — sol panel + 3D biyom arka plan -->
@@ -634,6 +656,7 @@ body.menu-open #pc-hint { display: none; }
       <section class="inv-col" id="inv-left">
         <h2>Envanter</h2>
         <div class="inv-scroll"><div class="inv-grid" id="inv-grid"></div></div>
+        <button class="btn btn-secondary" id="btn-inv-drop" type="button" style="margin-top:6px;flex-shrink:0;padding:8px;font-size:12px;">⤵ Seçili hotbar eşyasını bırak</button>
       </section>
       <section class="inv-col" id="inv-right">
         <h2 id="craft-title">Üretim</h2>
@@ -5931,7 +5954,9 @@ function setupInput() {
     }
     if (e.code === 'KeyX' && GAME.started && GAME.mounted) dismountCamel();
     if (e.code === 'Escape' && GAME.started) {
-      if (GAME.buildMode) exitBuildMode();
+      if (ChestSys.open) ChestSys.close();
+      else if (document.getElementById('inv-overlay').style.display === 'flex') closeInventory();
+      else if (GAME.buildMode) exitBuildMode();
       else togglePause();
     }
     if (e.code === 'KeyF') toggleFullscreen();
@@ -6068,6 +6093,7 @@ function setupInput() {
   // Fare tekerleği ile hotbar
   document.addEventListener('wheel', e => {
     if (!GAME.started || GAME.paused || GAME.dead) return;
+    if (GAME.buildMode) { rotateBuild(e.deltaY > 0 ? 1 : -1); return; }
     if (e.deltaY > 0) GAME.selectedSlot = (GAME.selectedSlot + 1) % HOTBAR_SIZE;
     else GAME.selectedSlot = (GAME.selectedSlot + HOTBAR_SIZE - 1) % HOTBAR_SIZE;
     updateHotbarUI();
@@ -12466,6 +12492,101 @@ updateMobileActionLabel = function () {
   if (GAME.device === 'mobile') { try { Ctx.refresh(); } catch (e) {} return; }
   _umal.apply(this, arguments);
 };
+
+
+/* ============================================================
+   EK KONTROLLER — inşa döndürme (PC + mobil), kaydırma, mobil menü, güvenlik
+   ============================================================ */
+function rotateBuild(step) {
+  if (!GAME.buildMode) return;
+  const q = Math.PI * 2;
+  GAME.buildRot = (((GAME.buildRot + (step || 1) * Math.PI / 2) % q) + q) % q;
+  if (buildPreview) buildPreview.rotation.y = GAME.buildRot;
+  try { Feedback.playTone(380, 0.04, 'square', 0.04); } catch (e) {}
+}
+const _ebm_x = enterBuildMode;
+enterBuildMode = function (id) {
+  _ebm_x(id);
+  if (GAME.buildMode) {
+    document.body.classList.add('building');
+    const h = document.getElementById('build-hint');
+    if (h) h.textContent = GAME.device === 'mobile' ? 'İnşa: ⟳ döndür | eylem tuşu yerleştir | ✕ iptal' : 'İnşa: R / tekerlek döndür | Sol tık yerleştir | Q çık';
+  }
+};
+const _xbm_x = exitBuildMode;
+exitBuildMode = function () { _xbm_x(); document.body.classList.remove('building'); };
+
+(function () {
+  // dokunma + tık çift tetiklenmesin
+  function onTap(el, fn) {
+    if (!el) return;
+    el.addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); window._lastTouchTap = Date.now(); fn(); }, { passive: false });
+    el.addEventListener('click', function (e) { if (Date.now() - (window._lastTouchTap || 0) < 700) return; fn(); });
+  }
+  onTap(document.getElementById('btn-rot'), function () { rotateBuild(1); });
+  onTap(document.getElementById('btn-cancel-build'), function () { exitBuildMode(); });
+  onTap(document.getElementById('btn-menu-m'), function () { if (GAME.started && !GAME.dead) togglePause(true); });
+  ['btn-rot', 'btn-cancel-build', 'btn-menu-m'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('touchcancel', function () { try { resetInputState(); } catch (e) {} });
+  });
+
+  // envanterden seçili eşyayı bırak (mobilde Q yok)
+  const dropBtn = document.getElementById('btn-inv-drop');
+  if (dropBtn) dropBtn.onclick = function (ev) {
+    ev.preventDefault(); ev.stopPropagation();
+    const o = document.getElementById('inv-overlay'), wasPaused = GAME.paused;
+    o.style.display = 'none'; GAME.paused = false;
+    try { dropSelectedItem(); } catch (e) {}
+    GAME.paused = wasPaused; o.style.display = 'flex';
+    openInventory();
+  };
+
+  // Mouse ile sekme / liste kaydırma (tekerlek + sürükleme)
+  function dragScroll(el, horizontal) {
+    if (!el || el._ds) return;
+    el._ds = true;
+    if (horizontal) el.addEventListener('wheel', function (e) {
+      if (Math.abs(e.deltaY) >= Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
+    }, { passive: false });
+    let down = false, moved = false, sx = 0, sy = 0, sl = 0, st = 0;
+    el.addEventListener('mousedown', function (e) { if (e.button !== 0) return; down = true; moved = false; sx = e.clientX; sy = e.clientY; sl = el.scrollLeft; st = el.scrollTop; });
+    window.addEventListener('mousemove', function (e) {
+      if (!down) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) > 6) moved = true;
+      if (moved) { if (horizontal) el.scrollLeft = sl - dx; else el.scrollTop = st - dy; }
+    });
+    window.addEventListener('mouseup', function () {
+      if (!down) return; down = false;
+      if (moved) { window._dsMoved = true; setTimeout(function () { window._dsMoved = false; }, 60); }
+    });
+    el.addEventListener('click', function (e) { if (window._dsMoved) { e.stopPropagation(); e.preventDefault(); } }, true);
+  }
+  const _oi2 = openInventory;
+  openInventory = function () {
+    _oi2.apply(this, arguments);
+    try { dragScroll(document.getElementById('craft-tabs'), true); dragScroll(document.getElementById('craft-list'), false); } catch (e) {}
+  };
+
+  // Tab: envanter aç/kapat (PC)
+  document.addEventListener('keydown', function (e) {
+    if (e.code !== 'Tab' || !GAME.started || GAME.dead) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    if (ChestSys.open) ChestSys.close();
+    else if (document.getElementById('inv-overlay').style.display === 'flex') closeInventory();
+    else if (!GAME.paused) openInventory();
+  });
+  // Uygulama / sekme arka plana gidince oyun otomatik duraksasın
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && GAME.started && !GAME.dead && !GAME.paused) {
+      try { togglePause(true); } catch (e) {}
+    }
+  });
+  // Uzun basma / sağ tık menüsü oyunu bölmesin
+  document.addEventListener('contextmenu', function (e) { if (GAME.started) e.preventDefault(); });
+})();
 
 // Tuşlar + başlat
 try { bindDeviceButtons(); } catch (e) {}
